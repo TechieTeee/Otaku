@@ -9,11 +9,11 @@ translator = Translator()
 # Initialize Speech-to-Text client
 client = speech.SpeechClient()
 
-def translate_text(text, target_language='ja', glossary=None):
+def translate_text(text, target_language='ja', glossary=None, context=None):
     """
-    Translate text to the target language.
+    Translate text to the target language with contextual information.
     """
-    translation = translator.translate(text, dest=target_language, glossary=glossary)
+    translation = translator.translate(text, dest=target_language, glossary=glossary, context=context)
     return translation.text
 
 def transcribe_audio(audio_file):
@@ -23,12 +23,11 @@ def transcribe_audio(audio_file):
     with open(audio_file, 'rb') as audio_file:
         content = audio_file.read()
 
+    # For English inputs
     audio = speech.RecognitionAudio(content=content)
-
-    # For English audio input
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-        language_code='en-US',
+        language_code='en-US',  
     )
 
     response = client.recognize(config=config, audio=audio)
@@ -40,7 +39,7 @@ def transcribe_audio(audio_file):
     
     return transcript
 
-def translate_file(file_path, glossary=None):
+def translate_file(file_path, glossary=None, context=None):
     """
     Translate the content of a file to the target language.
     """
@@ -50,13 +49,13 @@ def translate_file(file_path, glossary=None):
         with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
         
-        translated_content = translate_text(content, glossary=glossary)
+        translated_content = translate_text(content, glossary=glossary, context=context)
     elif file_extension.lower() in ['.mp3', '.wav']:
         # Transcribe audio file to text
         transcript = transcribe_audio(file_path)
         
         # Translate the transcription
-        translated_content = translate_text(transcript, glossary=glossary)
+        translated_content = translate_text(transcript, glossary=glossary, context=context)
     else:
         print("Unsupported file format.")
         return None
@@ -93,8 +92,11 @@ def main():
     glossary_file = input("Enter the path to the glossary file (optional): ")
     glossary = load_glossary(glossary_file)
     
+    # Prompt user for context information (optional)
+    context = input("Enter context information (optional): ")
+    
     # Translate the file
-    translated_content = translate_file(file_path, glossary=glossary)
+    translated_content = translate_file(file_path, glossary=glossary, context=context)
     
     # Output the translated content
     print("\nTranslated Content:")
