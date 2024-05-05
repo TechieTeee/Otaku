@@ -79,6 +79,21 @@ def load_glossary(glossary_file):
     
     return glossary
 
+def interactive_edit(translated_content):
+    """
+    Allow user to interactively edit translated content.
+    """
+    print("Translated Content:")
+    print(translated_content)
+    
+    edit_option = input("Do you want to make any edits? (y/n): ")
+    
+    if edit_option.lower() == 'y':
+        edited_content = input("Enter the corrected translation: ")
+        return edited_content
+    else:
+        return translated_content
+
 def main():
     # Prompt user for file path
     file_path = input("Enter the path to the file you want to translate: ")
@@ -98,9 +113,12 @@ def main():
     # Translate the file
     translated_content = translate_file(file_path, glossary=glossary, context=context)
     
-    # Output the translated content
-    print("\nTranslated Content:")
-    print(translated_content)
+    # Perform interactive editing
+    edited_content = interactive_edit(translated_content)
+    
+    # Output the edited content
+    print("\nEdited Content:")
+    print(edited_content)
 
 if __name__ == "__main__":
     main()
