@@ -14,7 +14,7 @@ Otaku Orator is a Python script designed to bridge language barriers in the worl
 ## Usage
 1. Clone this repository to your local machine.
 2. Run the script using `python main.py`.
-3. Follow the prompts to input the file path of the scene you want to translate.
+3. Follow the prompts to input the file path of the scene or section of text you want to translate.
 
 ## Contributing
 Contributions are welcome! If you have any suggestions for improvement or would like to report a bug, please open an issue or submit a pull request.
