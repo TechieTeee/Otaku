@@ -9,6 +9,20 @@ translator = Translator()
 # Initialize Speech-to-Text client
 client = speech.SpeechClient()
 
+def handle_errors(func):
+    """
+    Decorator to handle errors gracefully.
+    """
+    def wrapper(*args, **kwargs):
+        try:
+            result = func(*args, **kwargs)
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            result = None
+        return result
+    return wrapper
+
+@handle_errors
 def translate_text(text, target_language='ja', glossary=None, context=None):
     """
     Translate text to the target language with contextual information.
@@ -16,6 +30,7 @@ def translate_text(text, target_language='ja', glossary=None, context=None):
     translation = translator.translate(text, dest=target_language, glossary=glossary, context=context)
     return translation.text
 
+@handle_errors
 def transcribe_audio(audio_file):
     """
     Transcribe audio file to text.
@@ -39,6 +54,7 @@ def transcribe_audio(audio_file):
     
     return transcript
 
+@handle_errors
 def translate_file(file_path, glossary=None, context=None):
     """
     Translate the content of a file to the target language.
@@ -62,6 +78,7 @@ def translate_file(file_path, glossary=None, context=None):
     
     return translated_content
 
+@handle_errors
 def load_glossary(glossary_file):
     """
     Load custom glossary from file.
@@ -79,6 +96,7 @@ def load_glossary(glossary_file):
     
     return glossary
 
+@handle_errors
 def interactive_edit(translated_content):
     """
     Allow user to interactively edit translated content.
