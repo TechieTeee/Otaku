@@ -1,6 +1,6 @@
+import os
 import googletrans
 from googletrans import Translator
-import os
 from google.cloud import speech_v1p1beta1 as speech
 
 # Initialize translator
@@ -9,20 +9,6 @@ translator = Translator()
 # Initialize Speech-to-Text client
 client = speech.SpeechClient()
 
-def handle_errors(func):
-    """
-    Decorator to handle errors gracefully.
-    """
-    def wrapper(*args, **kwargs):
-        try:
-            result = func(*args, **kwargs)
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            result = None
-        return result
-    return wrapper
-
-@handle_errors
 def translate_text(text, target_language='ja', glossary=None, context=None):
     """
     Translate text to the target language with contextual information.
@@ -30,7 +16,6 @@ def translate_text(text, target_language='ja', glossary=None, context=None):
     translation = translator.translate(text, dest=target_language, glossary=glossary, context=context)
     return translation.text
 
-@handle_errors
 def transcribe_audio(audio_file):
     """
     Transcribe audio file to text.
@@ -54,31 +39,31 @@ def transcribe_audio(audio_file):
     
     return transcript
 
-@handle_errors
 def translate_file(file_path, glossary=None, context=None):
     """
     Translate the content of a file to the target language.
     """
     _, file_extension = os.path.splitext(file_path)
+    supported_formats = ['.txt', '.mp3', '.wav']
+    
+    if file_extension.lower() not in supported_formats:
+        print("Unsupported file format.")
+        return None
     
     if file_extension.lower() == '.txt':
         with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
         
         translated_content = translate_text(content, glossary=glossary, context=context)
-    elif file_extension.lower() in ['.mp3', '.wav']:
+    else:
         # Transcribe audio file to text
         transcript = transcribe_audio(file_path)
         
         # Translate the transcription
         translated_content = translate_text(transcript, glossary=glossary, context=context)
-    else:
-        print("Unsupported file format.")
-        return None
     
     return translated_content
 
-@handle_errors
 def load_glossary(glossary_file):
     """
     Load custom glossary from file.
@@ -96,7 +81,6 @@ def load_glossary(glossary_file):
     
     return glossary
 
-@handle_errors
 def interactive_edit(translated_content):
     """
     Allow user to interactively edit translated content.
@@ -132,11 +116,12 @@ def main():
     translated_content = translate_file(file_path, glossary=glossary, context=context)
     
     # Perform interactive editing
-    edited_content = interactive_edit(translated_content)
-    
-    # Output the edited content
-    print("\nEdited Content:")
-    print(edited_content)
+    if translated_content:
+        edited_content = interactive_edit(translated_content)
+        
+        # Output the edited content
+        print("\nEdited Content:")
+        print(edited_content)
 
 if __name__ == "__main__":
     main()
