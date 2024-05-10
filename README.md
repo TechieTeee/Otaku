@@ -1,3 +1,4 @@
+![Otaku_Cover_Image](https://github.com/TechieTeee/Otaku_Orartor/assets/100870737/c6a05535-d82a-4f2f-82b9-042f82c1360b)
 # Otaku Orator
 Otaku Orator is a Python script designed to bridge language barriers in the world of Japanese entertainment. It translates scenes from movies, TV shows, music, podcasts, and more to Japanese using the Google Translate API. With Otaku Orator, you can explore a wide range of Japanese content without language limitations.
 
