@@ -96,6 +96,15 @@ def interactive_edit(translated_content):
     else:
         return translated_content
 
+def save_to_file(translated_content):
+    """
+    Save translated content to a file.
+    """
+    file_path = input("Enter the path to save the translated content: ")
+    with open(file_path, 'w', encoding='utf-8') as file:
+        file.write(translated_content)
+    print("Translated content saved successfully.")
+
 def main():
     # Prompt user for file path
     file_path = input("Enter the path to the file you want to translate: ")
@@ -118,6 +127,11 @@ def main():
     # Perform interactive editing
     if translated_content:
         edited_content = interactive_edit(translated_content)
+        
+        # Save the edited content to a file
+        save_option = input("Do you want to save the translated content to a file? (y/n): ")
+        if save_option.lower() == 'y':
+            save_to_file(edited_content)
         
         # Output the edited content
         print("\nEdited Content:")
