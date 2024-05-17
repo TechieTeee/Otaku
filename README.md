@@ -10,7 +10,7 @@ Otaku Orator is a Python script designed to bridge language barriers in the worl
 - **Interactive Editing**: Review and edit translations interactively for finer adjustments.
 - **Speech-to-Text Support**: Translate spoken dialogue directly from audio files using Google Cloud Speech-to-Text API.
 - **Cultural Sensitivity**: Tailor translations to respect cultural nuances and preferences.
-- **Easy-to-Use Interface**: Simple command-line interface for seamless translation experience.
+- **Easy-to-Use Interface**: Simple command-line interface for user friendly, translation experience.
 
 ## Usage
 1. Clone this repository to your local machine.
