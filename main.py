@@ -80,22 +80,46 @@ def translate_file(file_path, glossary=None, context=None):
     
     return translated_content
 
+def save_translation(translated_content, output_file_path):
+    """
+    Save the translated content to a file.
+    """
+    with open(output_file_path, 'w', encoding='utf-8') as file:
+        file.write(translated_content)
+    print(f"Translated content saved to {output_file_path}")
+
+def batch_translate(file_paths, output_dir):
+    """
+    Translate multiple files and save the translations to an output directory.
+    """
+    for file_path in file_paths:
+        translated_content = translate_file(file_path)
+        if translated_content:
+            # Create a corresponding output file path
+            file_name = os.path.basename(file_path)
+            output_file_path = os.path.join(output_dir, f"translated_{file_name}")
+            save_translation(translated_content, output_file_path)
+
 def main():
-    # Prompt user for file path
-    file_path = input("Enter the path to the file you want to translate: ")
+    # Prompt user for file paths
+    file_paths = input("Enter the paths to the files you want to translate, separated by commas: ").split(',')
+    file_paths = [file_path.strip() for file_path in file_paths]
+
+    # Check if files exist
+    for file_path in file_paths:
+        if not os.path.exists(file_path):
+            print(f"File not found: {file_path}")
+            return
     
-    # Check if file exists
-    if not os.path.exists(file_path):
-        print("File not found.")
+    # Prompt user for output directory
+    output_dir = input("Enter the path to the directory to save translated content: ")
+    
+    if not os.path.exists(output_dir):
+        print("Output directory not found.")
         return
-    
-    # Translate the file
-    translated_content = translate_file(file_path)
-    
-    # Output the translated content
-    if translated_content:
-        print("\nTranslated Content:")
-        print(translated_content)
+
+    # Translate the files
+    batch_translate(file_paths, output_dir)
 
 if __name__ == "__main__":
     main()
