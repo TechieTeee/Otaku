@@ -17,5 +17,11 @@ Otaku Orator is a Python script designed to bridge language barriers in the worl
 2. Run the script using `python main.py`.
 3. Follow the prompts to input the file path of the scene or section of text you want to translate.
 
+## Good Movies with Japanese Translations to Try Out
+- DC Marvel movies - a lot of them have Japanese translations
+- Easter Sunday
+- Coco
+- Tomb Raider
+
 ## Contributing
 Contributions are welcome! If you have any suggestions for improvement or would like to report a bug, please open an issue or submit a pull request.
