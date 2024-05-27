@@ -8,6 +8,24 @@ translate_client = translate.Client()
 # Initialize Speech-to-Text client
 client = speech.SpeechClient()
 
+def check_file_existence(func):
+    def wrapper(file_path, *args, **kwargs):
+        if not os.path.exists(file_path):
+            print(f"File not found: {file_path}")
+            return None
+        return func(file_path, *args, **kwargs)
+    return wrapper
+
+def supported_format(func):
+    def wrapper(file_path, *args, **kwargs):
+        _, file_extension = os.path.splitext(file_path)
+        supported_formats = ['.txt', '.mp3', '.wav']
+        if file_extension.lower() not in supported_formats:
+            print("Unsupported file format.")
+            return None
+        return func(file_path, *args, **kwargs)
+    return wrapper
+
 def detect_language(text):
     """
     Detect the language of the text.
@@ -22,14 +40,15 @@ def translate_text(text, target_language='ja', glossary=None, context=None):
     translation = translate_client.translate(text, target_language=target_language)
     return translation['translatedText']
 
-def transcribe_audio(audio_file):
+@check_file_existence
+@supported_format
+def transcribe_audio(file_path):
     """
     Transcribe audio file to text.
     """
-    with open(audio_file, 'rb') as audio_file:
+    with open(file_path, 'rb') as audio_file:
         content = audio_file.read()
 
-    # For English inputs
     audio = speech.RecognitionAudio(content=content)
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
@@ -38,23 +57,16 @@ def transcribe_audio(audio_file):
 
     response = client.recognize(config=config, audio=audio)
     
-    # Extract and concatenate transcription from response
-    transcript = ''
-    for result in response.results:
-        transcript += result.alternatives[0].transcript
-    
+    transcript = ''.join(result.alternatives[0].transcript for result in response.results)
     return transcript
 
+@check_file_existence
+@supported_format
 def translate_file(file_path, glossary=None, context=None):
     """
     Translate the content of a file to Japanese.
     """
     _, file_extension = os.path.splitext(file_path)
-    supported_formats = ['.txt', '.mp3', '.wav']
-    
-    if file_extension.lower() not in supported_formats:
-        print("Unsupported file format.")
-        return None
     
     if file_extension.lower() == '.txt':
         with open(file_path, 'r', encoding='utf-8') as file:
@@ -67,10 +79,10 @@ def translate_file(file_path, glossary=None, context=None):
             print("Input text is already in Japanese.")
             return None
     else:
-        # Transcribe audio file to text
         transcript = transcribe_audio(file_path)
+        if not transcript:
+            return None
         
-        # Detect language of the transcription
         source_language = detect_language(transcript)
         if source_language != 'ja':
             translated_content = translate_text(transcript)
@@ -95,30 +107,20 @@ def batch_translate(file_paths, output_dir):
     for file_path in file_paths:
         translated_content = translate_file(file_path)
         if translated_content:
-            # Create a corresponding output file path
             file_name = os.path.basename(file_path)
             output_file_path = os.path.join(output_dir, f"translated_{file_name}")
             save_translation(translated_content, output_file_path)
 
 def main():
-    # Prompt user for file paths
     file_paths = input("Enter the paths to the files you want to translate, separated by commas: ").split(',')
     file_paths = [file_path.strip() for file_path in file_paths]
 
-    # Check if files exist
-    for file_path in file_paths:
-        if not os.path.exists(file_path):
-            print(f"File not found: {file_path}")
-            return
-    
-    # Prompt user for output directory
     output_dir = input("Enter the path to the directory to save translated content: ")
     
     if not os.path.exists(output_dir):
         print("Output directory not found.")
         return
 
-    # Translate the files
     batch_translate(file_paths, output_dir)
 
 if __name__ == "__main__":
