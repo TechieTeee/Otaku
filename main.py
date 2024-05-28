@@ -1,4 +1,5 @@
 import os
+import random
 from google.cloud import speech_v1p1beta1 as speech
 from google.cloud import translate_v2 as translate
 
@@ -111,17 +112,77 @@ def batch_translate(file_paths, output_dir):
             output_file_path = os.path.join(output_dir, f"translated_{file_name}")
             save_translation(translated_content, output_file_path)
 
+def translate_conversation(input_text, target_language='ja'):
+    """
+    Translate conversational text for a digital pen pal.
+    """
+    source_language = detect_language(input_text)
+    if source_language != target_language:
+        translated_content = translate_text(input_text, target_language)
+        return translated_content
+    else:
+        print("Input text is already in the target language.")
+        return None
+
+def translate_forum_post(input_text, target_language='ja'):
+    """
+    Translate text intended for forum posts.
+    """
+    source_language = detect_language(input_text)
+    if source_language != target_language:
+        translated_content = translate_text(input_text, target_language)
+        return translated_content
+    else:
+        print("Input text is already in the target language.")
+        return None
+
+def get_daily_challenge():
+    """
+    Provide a daily challenge for the user.
+    """
+    challenges = [
+        "Write a short paragraph about your day in Japanese.",
+        "Translate the following sentence to Japanese: 'I am learning Japanese to improve my skills.'",
+        "Read a Japanese article and summarize it in English.",
+        "Listen to a Japanese podcast or song and write down what you understand.",
+        "Have a conversation with a digital pen pal about your hobbies in Japanese.",
+        "Write a forum post in Japanese about your favorite book.",
+        "Translate a cooking recipe from English to Japanese.",
+        "Practice speaking by recording yourself introducing your family in Japanese."
+    ]
+    challenge = random.choice(challenges)
+    return challenge
+
 def main():
-    file_paths = input("Enter the paths to the files you want to translate, separated by commas: ").split(',')
-    file_paths = [file_path.strip() for file_path in file_paths]
-
-    output_dir = input("Enter the path to the directory to save translated content: ")
+    print("Welcome! Here's your daily challenge:")
+    daily_challenge = get_daily_challenge()
+    print(daily_challenge)
     
-    if not os.path.exists(output_dir):
-        print("Output directory not found.")
-        return
+    choice = input("Choose an option: (1) Translate files, (2) Translate conversation, (3) Translate forum post: ").strip()
+    
+    if choice == '1':
+        file_paths = input("Enter the paths to the files you want to translate, separated by commas: ").split(',')
+        file_paths = [file_path.strip() for file_path in file_paths]
 
-    batch_translate(file_paths, output_dir)
+        output_dir = input("Enter the path to the directory to save translated content: ")
+        
+        if not os.path.exists(output_dir):
+            print("Output directory not found.")
+            return
+
+        batch_translate(file_paths, output_dir)
+    elif choice == '2':
+        input_text = input("Enter the text for your conversation: ").strip()
+        translated_content = translate_conversation(input_text)
+        if translated_content:
+            print(f"Translated Text: {translated_content}")
+    elif choice == '3':
+        input_text = input("Enter the text for your forum post: ").strip()
+        translated_content = translate_forum_post(input_text)
+        if translated_content:
+            print(f"Translated Text: {translated_content}")
+    else:
+        print("Invalid option.")
 
 if __name__ == "__main__":
     main()
