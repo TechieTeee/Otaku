@@ -11,6 +11,7 @@ Otaku is a Python script designed to bridge language barriers in the world of Ja
 - **Speech-to-Text Support**: Translate spoken dialogue directly from audio files using Google Cloud Speech-to-Text API.
 - **Cultural Sensitivity**: Tailor translations to respect cultural nuances and preferences.
 - **Easy-to-Use Interface**: Simple command-line interface for user friendly, translation experience.
+- **Daily Language Challenges**: Daily adventure challenges to help with language learning
 
 ## Usage
 1. Clone this repository to your local machine.
