@@ -1,5 +1,6 @@
 import os
 import random
+import asyncio
 from google.cloud import speech_v1p1beta1 as speech
 from google.cloud import translate_v2 as translate
 
@@ -34,16 +35,7 @@ def detect_language(text):
     response = translate_client.detect_language(text)
     return response['language']
 
-def translate_text(text, target_language='ja', glossary=None, context=None):
-    """
-    Translate text to the target language with contextual information.
-    """
-    translation = translate_client.translate(text, target_language=target_language)
-    return translation['translatedText']
-
-@check_file_existence
-@supported_format
-def transcribe_audio(file_path):
+async def transcribe_audio(file_path):
     """
     Transcribe audio file to text.
     """
@@ -56,14 +48,12 @@ def transcribe_audio(file_path):
         language_code='en-US',  
     )
 
-    response = client.recognize(config=config, audio=audio)
+    response = await client.recognize(config=config, audio=audio)
     
     transcript = ''.join(result.alternatives[0].transcript for result in response.results)
     return transcript
 
-@check_file_existence
-@supported_format
-def translate_file(file_path, glossary=None, context=None):
+async def translate_file(file_path):
     """
     Translate the content of a file to Japanese.
     """
@@ -80,7 +70,7 @@ def translate_file(file_path, glossary=None, context=None):
             print("Input text is already in Japanese.")
             return None
     else:
-        transcript = transcribe_audio(file_path)
+        transcript = await transcribe_audio(file_path)
         if not transcript:
             return None
         
@@ -101,16 +91,29 @@ def save_translation(translated_content, output_file_path):
         file.write(translated_content)
     print(f"Translated content saved to {output_file_path}")
 
-def batch_translate(file_paths, output_dir):
+async def batch_translate(file_paths, output_dir):
     """
     Translate multiple files and save the translations to an output directory.
     """
+    tasks = []
     for file_path in file_paths:
-        translated_content = translate_file(file_path)
-        if translated_content:
+        task = translate_file(file_path)
+        tasks.append(task)
+    
+    translations = await asyncio.gather(*tasks)
+    
+    for file_path, translation in zip(file_paths, translations):
+        if translation:
             file_name = os.path.basename(file_path)
             output_file_path = os.path.join(output_dir, f"translated_{file_name}")
-            save_translation(translated_content, output_file_path)
+            save_translation(translation, output_file_path)
+
+def translate_text(text, target_language='ja', glossary=None, context=None):
+    """
+    Translate text to the target language with contextual information.
+    """
+    translation = translate_client.translate(text, target_language=target_language)
+    return translation['translatedText']
 
 def translate_conversation(input_text, target_language='ja'):
     """
@@ -170,7 +173,7 @@ def main():
             print("Output directory not found.")
             return
 
-        batch_translate(file_paths, output_dir)
+        asyncio.run(batch_translate(file_paths, output_dir))
     elif choice == '2':
         input_text = input("Enter the text for your conversation: ").strip()
         translated_content = translate_conversation(input_text)
