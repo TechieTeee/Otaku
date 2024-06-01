@@ -1,6 +1,8 @@
 import os
 import random
 import asyncio
+import tkinter as tk
+from tkinter import filedialog, messagebox
 from google.cloud import speech_v1p1beta1 as speech
 from google.cloud import translate_v2 as translate
 
@@ -156,36 +158,62 @@ def get_daily_challenge():
     challenge = random.choice(challenges)
     return challenge
 
-def main():
-    print("Welcome! Here's your daily challenge:")
-    daily_challenge = get_daily_challenge()
-    print(daily_challenge)
-    
-    choice = input("Choose an option: (1) Translate files, (2) Translate conversation, (3) Translate forum post: ").strip()
-    
-    if choice == '1':
-        file_paths = input("Enter the paths to the files you want to translate, separated by commas: ").split(',')
-        file_paths = [file_path.strip() for file_path in file_paths]
+class TranslatorApp(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Japanese Translation and Learning App")
+        self.geometry("600x400")
 
-        output_dir = input("Enter the path to the directory to save translated content: ")
+        self.create_widgets()
+
+    def create_widgets(self):
+        self.daily_challenge_label = tk.Label(self, text="Welcome! Here's your daily challenge:")
+        self.daily_challenge_label.pack(pady=10)
         
-        if not os.path.exists(output_dir):
-            print("Output directory not found.")
-            return
+        self.daily_challenge_text = tk.Label(self, text=get_daily_challenge(), wraplength=500)
+        self.daily_challenge_text.pack(pady=10)
+        
+        self.option_label = tk.Label(self, text="Choose an option:")
+        self.option_label.pack(pady=10)
+        
+        self.translate_files_button = tk.Button(self, text="Translate Files", command=self.translate_files)
+        self.translate_files_button.pack(pady=5)
+        
+        self.translate_conversation_button = tk.Button(self, text="Translate Conversation", command=self.translate_conversation)
+        self.translate_conversation_button.pack(pady=5)
+        
+        self.translate_forum_post_button = tk.Button(self, text="Translate Forum Post", command=self.translate_forum_post)
+        self.translate_forum_post_button.pack(pady=5)
+        
+        self.quit_button = tk.Button(self, text="Quit", command=self.quit)
+        self.quit_button.pack(pady=10)
 
+    def translate_files(self):
+        file_paths = filedialog.askopenfilenames(title="Select files to translate", filetypes=[("Text files", "*.txt"), ("Audio files", "*.mp3 *.wav")])
+        if not file_paths:
+            return
+        
+        output_dir = filedialog.askdirectory(title="Select output directory")
+        if not output_dir:
+            return
+        
         asyncio.run(batch_translate(file_paths, output_dir))
-    elif choice == '2':
-        input_text = input("Enter the text for your conversation: ").strip()
-        translated_content = translate_conversation(input_text)
-        if translated_content:
-            print(f"Translated Text: {translated_content}")
-    elif choice == '3':
-        input_text = input("Enter the text for your forum post: ").strip()
-        translated_content = translate_forum_post(input_text)
-        if translated_content:
-            print(f"Translated Text: {translated_content}")
-    else:
-        print("Invalid option.")
+        messagebox.showinfo("Info", "Translation complete")
+
+    def translate_conversation(self):
+        input_text = tk.simpledialog.askstring("Input", "Enter the text for your conversation:")
+        if input_text:
+            translated_content = translate_conversation(input_text)
+            if translated_content:
+                messagebox.showinfo("Translated Text", translated_content)
+
+    def translate_forum_post(self):
+        input_text = tk.simpledialog.askstring("Input", "Enter the text for your forum post:")
+        if input_text:
+            translated_content = translate_forum_post(input_text)
+            if translated_content:
+                messagebox.showinfo("Translated Text", translated_content)
 
 if __name__ == "__main__":
-    main()
+    app = TranslatorApp()
+    app.mainloop()
