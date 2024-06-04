@@ -1,8 +1,9 @@
 import os
 import random
 import asyncio
+import threading
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, scrolledtext
 from google.cloud import speech_v1p1beta1 as speech
 from google.cloud import translate_v2 as translate
 
@@ -93,7 +94,7 @@ def save_translation(translated_content, output_file_path):
         file.write(translated_content)
     print(f"Translated content saved to {output_file_path}")
 
-async def batch_translate(file_paths, output_dir):
+async def batch_translate(file_paths, output_dir, progress_callback):
     """
     Translate multiple files and save the translations to an output directory.
     """
@@ -104,11 +105,12 @@ async def batch_translate(file_paths, output_dir):
     
     translations = await asyncio.gather(*tasks)
     
-    for file_path, translation in zip(file_paths, translations):
+    for i, (file_path, translation) in enumerate(zip(file_paths, translations)):
         if translation:
             file_name = os.path.basename(file_path)
             output_file_path = os.path.join(output_dir, f"translated_{file_name}")
             save_translation(translation, output_file_path)
+        progress_callback(i + 1, len(file_paths))
 
 def translate_text(text, target_language='ja', glossary=None, context=None):
     """
@@ -162,7 +164,7 @@ class TranslatorApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Japanese Translation and Learning App")
-        self.geometry("600x400")
+        self.geometry("600x600")
 
         self.create_widgets()
 
@@ -188,6 +190,13 @@ class TranslatorApp(tk.Tk):
         self.quit_button = tk.Button(self, text="Quit", command=self.quit)
         self.quit_button.pack(pady=10)
 
+        self.progress = tk.DoubleVar()
+        self.progress_bar = tk.ttk.Progressbar(self, variable=self.progress, maximum=100)
+        self.progress_bar.pack(pady=10, fill=tk.X)
+
+        self.output_text = scrolledtext.ScrolledText(self, wrap=tk.WORD, height=10)
+        self.output_text.pack(pady=10, fill=tk.BOTH, expand=True)
+
     def translate_files(self):
         file_paths = filedialog.askopenfilenames(title="Select files to translate", filetypes=[("Text files", "*.txt"), ("Audio files", "*.mp3 *.wav")])
         if not file_paths:
@@ -197,7 +206,13 @@ class TranslatorApp(tk.Tk):
         if not output_dir:
             return
         
-        asyncio.run(batch_translate(file_paths, output_dir))
+        self.progress.set(0)
+        self.output_text.delete(1.0, tk.END)
+
+        def progress_callback(current, total):
+            self.progress.set((current / total) * 100)
+
+        asyncio.run(batch_translate(file_paths, output_dir, progress_callback))
         messagebox.showinfo("Info", "Translation complete")
 
     def translate_conversation(self):
@@ -205,6 +220,8 @@ class TranslatorApp(tk.Tk):
         if input_text:
             translated_content = translate_conversation(input_text)
             if translated_content:
+                self.output_text.delete(1.0, tk.END)
+                self.output_text.insert(tk.END, translated_content)
                 messagebox.showinfo("Translated Text", translated_content)
 
     def translate_forum_post(self):
@@ -212,6 +229,8 @@ class TranslatorApp(tk.Tk):
         if input_text:
             translated_content = translate_forum_post(input_text)
             if translated_content:
+                self.output_text.delete(1.0, tk.END)
+                self.output_text.insert(tk.END, translated_content)
                 messagebox.showinfo("Translated Text", translated_content)
 
 if __name__ == "__main__":
