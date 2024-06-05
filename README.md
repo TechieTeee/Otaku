@@ -18,7 +18,7 @@ Otaku is a Python script designed to bridge language barriers in the world of Ja
 2. Run the script using `python main.py`.
 3. Follow the prompts to input the file path of the scene or section of text you want to translate.
 
-## Good Movies with Japanese Translations to Try Out
+## Good Movies with Japanese Audio to Try Out
 - Easter Sunday
 - Tomb Raider
 - DC Marvel movies - a lot of them have Japanese translations (Into the Spider Verse,etc.)
