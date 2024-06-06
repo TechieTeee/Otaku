@@ -1,6 +1,6 @@
 ![Otaku Orator (2)](https://github.com/TechieTeee/Otaku/assets/100870737/921c4825-5968-402e-9387-484fa87c6d34)
 # Otaku
-Otaku is a Python script designed to bridge language barriers in the world of Japanese entertainment by making learning fun and engaging. It translates scenes from movies, TV shows, music, podcasts, and more to Japanese using the Google Translate API. With Otaku Orator, you can explore a wide range of Japanese content without language limitations, as well as daily language challenges for writing, speaking and listening.
+Otaku is a Python script designed to bridge language barriers in the world of Japanese entertainment by making learning fun and engaging. It translates scenes from movies, TV shows, music, podcasts, and more to Japanese using the Google Translate API. With Otaku Orator, you can explore a wide range of Japanese content without language limitations, as well as daily language challenges for writing, speaking and listening. It's a new spend on immersive learning with the thrills of adventure.
 
 ## Features
 - **Broad Compatibility**: Translate scenes from movies, TV shows, music, podcasts, and more.
