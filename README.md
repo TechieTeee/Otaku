@@ -9,7 +9,7 @@ Otaku is an interactive program, written in Python that is designed to bridge la
 - **Contextual Translation**: Enhance translation accuracy by providing context information such as character names and cultural references.
 - **Interactive Editing**: Review and edit translations interactively for finer adjustments.
 - **Speech-to-Text Support**: Translate spoken dialogue directly from audio files using Google Cloud Speech-to-Text API.
-- **Cultural Sensitivity**: Tailor translations to respect cultural nuances and preferences.
+- **Cultural Context**: Tailor translations to respect cultural nuances and preferences.
 - **Easy-to-Use Interface**: Simple command-line interface for user friendly, translation experience.
 - **Daily Language Challenges**: Daily adventure challenges to help with language learning
 
