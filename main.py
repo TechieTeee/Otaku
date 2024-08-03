@@ -7,11 +7,9 @@ from tkinter import filedialog, messagebox, scrolledtext, ttk
 from google.cloud import speech_v1p1beta1 as speech
 from google.cloud import translate_v2 as translate
 
-# Initialize Translation client
+# Initialize clients
 translate_client = translate.Client()
-
-# Initialize Speech-to-Text client
-client = speech.SpeechClient()
+speech_client = speech.SpeechClient()
 
 def check_file_existence(func):
     def wrapper(file_path, *args, **kwargs):
@@ -36,18 +34,22 @@ def detect_language(text):
     return response['language']
 
 async def transcribe_audio(file_path):
-    with open(file_path, 'rb') as audio_file:
-        content = audio_file.read()
+    try:
+        with open(file_path, 'rb') as audio_file:
+            content = audio_file.read()
 
-    audio = speech.RecognitionAudio(content=content)
-    config = speech.RecognitionConfig(
-        encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-        language_code='en-US',
-    )
+        audio = speech.RecognitionAudio(content=content)
+        config = speech.RecognitionConfig(
+            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+            language_code='en-US',
+        )
 
-    response = await client.recognize(config=config, audio=audio)
-    transcript = ''.join(result.alternatives[0].transcript for result in response.results)
-    return transcript
+        response = await speech_client.recognize(config=config, audio=audio)
+        transcript = ''.join(result.alternatives[0].transcript for result in response.results)
+        return transcript
+    except Exception as e:
+        print(f"Error transcribing audio: {e}")
+        return None
 
 async def translate_file(file_path, target_language='ja'):
     _, file_extension = os.path.splitext(file_path)
@@ -130,9 +132,10 @@ class TranslatorApp(tk.Tk):
         self.title("Japanese Translation and Learning App")
         self.geometry("700x700")
         
-        self.create_widgets()
         self.default_output_dir = os.path.expanduser("~")
         self.default_target_language = 'ja'
+        
+        self.create_widgets()
 
     def create_widgets(self):
         self.daily_challenge_label = tk.Label(self, text="Welcome! Here's your daily challenge:")
