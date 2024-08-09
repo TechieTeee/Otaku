@@ -30,8 +30,7 @@ def supported_format(func):
     return wrapper
 
 def detect_language(text):
-    response = translate_client.detect_language(text)
-    return response['language']
+    return translate_client.detect_language(text)['language']
 
 async def transcribe_audio(file_path):
     try:
@@ -45,8 +44,7 @@ async def transcribe_audio(file_path):
         )
 
         response = await speech_client.recognize(config=config, audio=audio)
-        transcript = ''.join(result.alternatives[0].transcript for result in response.results)
-        return transcript
+        return ''.join(result.alternatives[0].transcript for result in response.results)
     except Exception as e:
         print(f"Error transcribing audio: {e}")
         return None
@@ -57,24 +55,19 @@ async def translate_file(file_path, target_language='ja'):
     if file_extension.lower() == '.txt':
         with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
-        source_language = detect_language(content)
-        if source_language != target_language:
-            translated_content = translate_text(content, target_language)
-        else:
-            print("Input text is already in the target language.")
-            return None
+        text_to_translate = content
     else:
-        transcript = await transcribe_audio(file_path)
-        if not transcript:
-            return None
-        source_language = detect_language(transcript)
-        if source_language != target_language:
-            translated_content = translate_text(transcript, target_language)
-        else:
-            print("Input audio is already in the target language.")
-            return None
-    
-    return translated_content
+        text_to_translate = await transcribe_audio(file_path)
+
+    if not text_to_translate:
+        return None
+
+    source_language = detect_language(text_to_translate)
+    if source_language == target_language:
+        print("Input text is already in the target language.")
+        return None
+
+    return translate_text(text_to_translate, target_language)
 
 def save_translation(translated_content, output_file_path):
     with open(output_file_path, 'w', encoding='utf-8') as file:
@@ -82,36 +75,17 @@ def save_translation(translated_content, output_file_path):
     print(f"Translated content saved to {output_file_path}")
 
 async def batch_translate(file_paths, output_dir, progress_callback, target_language='ja'):
-    tasks = [translate_file(file_path, target_language) for file_path in file_paths]
-    translations = await asyncio.gather(*tasks)
+    translations = await asyncio.gather(
+        *[translate_file(file_path, target_language) for file_path in file_paths]
+    )
     for i, (file_path, translation) in enumerate(zip(file_paths, translations)):
         if translation:
-            file_name = os.path.basename(file_path)
-            output_file_path = os.path.join(output_dir, f"translated_{file_name}")
+            output_file_path = os.path.join(output_dir, f"translated_{os.path.basename(file_path)}")
             save_translation(translation, output_file_path)
         progress_callback(i + 1, len(file_paths))
 
-def translate_text(text, target_language='ja', glossary=None, context=None):
-    translation = translate_client.translate(text, target_language=target_language)
-    return translation['translatedText']
-
-def translate_conversation(input_text, target_language='ja'):
-    source_language = detect_language(input_text)
-    if source_language != target_language:
-        translated_content = translate_text(input_text, target_language)
-        return translated_content
-    else:
-        print("Input text is already in the target language.")
-        return None
-
-def translate_forum_post(input_text, target_language='ja'):
-    source_language = detect_language(input_text)
-    if source_language != target_language:
-        translated_content = translate_text(input_text, target_language)
-        return translated_content
-    else:
-        print("Input text is already in the target language.")
-        return None
+def translate_text(text, target_language='ja'):
+    return translate_client.translate(text, target_language=target_language)['translatedText']
 
 def get_daily_challenge():
     challenges = [
@@ -138,35 +112,22 @@ class TranslatorApp(tk.Tk):
         self.create_widgets()
 
     def create_widgets(self):
-        self.daily_challenge_label = tk.Label(self, text="Welcome! Here's your daily challenge:")
-        self.daily_challenge_label.pack(pady=10)
+        tk.Label(self, text="Welcome! Here's your daily challenge:").pack(pady=10)
+        tk.Label(self, text=get_daily_challenge(), wraplength=600).pack(pady=10)
         
-        self.daily_challenge_text = tk.Label(self, text=get_daily_challenge(), wraplength=600)
-        self.daily_challenge_text.pack(pady=10)
-        
-        self.option_label = tk.Label(self, text="Choose an option:")
-        self.option_label.pack(pady=10)
+        tk.Label(self, text="Choose an option:").pack(pady=10)
 
         self.file_translate_frame = tk.Frame(self)
         self.file_translate_frame.pack(pady=5)
-        self.translate_files_button = tk.Button(self.file_translate_frame, text="Translate Files", command=self.translate_files)
-        self.translate_files_button.pack(side=tk.LEFT, padx=5)
+        tk.Button(self.file_translate_frame, text="Translate Files", command=self.translate_files).pack(side=tk.LEFT, padx=5)
 
-        self.translate_conversation_button = tk.Button(self, text="Translate Conversation", command=self.translate_conversation)
-        self.translate_conversation_button.pack(pady=5)
-
-        self.translate_forum_post_button = tk.Button(self, text="Translate Forum Post", command=self.translate_forum_post)
-        self.translate_forum_post_button.pack(pady=5)
-
-        self.settings_button = tk.Button(self, text="Settings", command=self.open_settings)
-        self.settings_button.pack(pady=5)
-
-        self.quit_button = tk.Button(self, text="Quit", command=self.quit)
-        self.quit_button.pack(pady=10)
+        tk.Button(self, text="Translate Conversation", command=self.translate_conversation).pack(pady=5)
+        tk.Button(self, text="Translate Forum Post", command=self.translate_forum_post).pack(pady=5)
+        tk.Button(self, text="Settings", command=self.open_settings).pack(pady=5)
+        tk.Button(self, text="Quit", command=self.quit).pack(pady=10)
 
         self.progress = tk.DoubleVar()
-        self.progress_bar = ttk.Progressbar(self, variable=self.progress, maximum=100)
-        self.progress_bar.pack(pady=10, fill=tk.X)
+        ttk.Progressbar(self, variable=self.progress, maximum=100).pack(pady=10, fill=tk.X)
 
         self.output_text = scrolledtext.ScrolledText(self, wrap=tk.WORD, height=10)
         self.output_text.pack(pady=10, fill=tk.BOTH, expand=True)
@@ -179,15 +140,19 @@ class TranslatorApp(tk.Tk):
         self.status_bar.update_idletasks()
 
     def translate_files(self):
-        file_paths = filedialog.askopenfilenames(title="Select files to translate", filetypes=[("Text files", "*.txt"), ("Audio files", "*.mp3 *.wav")])
+        file_paths = filedialog.askopenfilenames(
+            title="Select files to translate", 
+            filetypes=[("Text files", "*.txt"), ("Audio files", "*.mp3 *.wav")]
+        )
         if not file_paths:
             return
 
-        output_dir = filedialog.askdirectory(title="Select output directory", initialdir=self.default_output_dir)
+        output_dir = filedialog.askdirectory(
+            title="Select output directory", 
+            initialdir=self.default_output_dir
+        )
         if not output_dir:
             return
-
-        target_language = self.default_target_language
 
         self.progress.set(0)
         self.output_text.delete(1.0, tk.END)
@@ -197,7 +162,7 @@ class TranslatorApp(tk.Tk):
             self.set_status(f"Translating file {current} of {total}")
 
         def run_translation():
-            asyncio.run(batch_translate(file_paths, output_dir, progress_callback, target_language))
+            asyncio.run(batch_translate(file_paths, output_dir, progress_callback, self.default_target_language))
             self.set_status("Translation complete")
             messagebox.showinfo("Info", "Translation complete")
 
@@ -206,7 +171,7 @@ class TranslatorApp(tk.Tk):
     def translate_conversation(self):
         input_text = tk.simpledialog.askstring("Input", "Enter the text for your conversation:")
         if input_text:
-            translated_content = translate_conversation(input_text, self.default_target_language)
+            translated_content = translate_text(input_text, self.default_target_language)
             if translated_content:
                 self.output_text.delete(1.0, tk.END)
                 self.output_text.insert(tk.END, translated_content)
@@ -215,7 +180,7 @@ class TranslatorApp(tk.Tk):
     def translate_forum_post(self):
         input_text = tk.simpledialog.askstring("Input", "Enter the text for your forum post:")
         if input_text:
-            translated_content = translate_forum_post(input_text, self.default_target_language)
+            translated_content = translate_text(input_text, self.default_target_language)
             if translated_content:
                 self.output_text.delete(1.0, tk.END)
                 self.output_text.insert(tk.END, translated_content)
@@ -240,7 +205,10 @@ class TranslatorApp(tk.Tk):
         tk.Button(settings_window, text="Save", command=self.save_settings).pack(pady=10)
 
     def set_output_dir(self):
-        directory = filedialog.askdirectory(title="Select default output directory", initialdir=self.default_output_dir)
+        directory = filedialog.askdirectory(
+            title="Select default output directory", 
+            initialdir=self.default_output_dir
+        )
         if directory:
             self.output_dir_entry.delete(0, tk.END)
             self.output_dir_entry.insert(0, directory)
