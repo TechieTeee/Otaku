@@ -1,5 +1,4 @@
 import os
-import random
 import asyncio
 import threading
 import tkinter as tk
@@ -32,7 +31,7 @@ def supported_format(func):
 def detect_language(text):
     return translate_client.detect_language(text)['language']
 
-async def transcribe_audio(file_path):
+async def transcribe_audio(file_path, language_code='ja-JP'):
     try:
         with open(file_path, 'rb') as audio_file:
             content = audio_file.read()
@@ -40,7 +39,7 @@ async def transcribe_audio(file_path):
         audio = speech.RecognitionAudio(content=content)
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            language_code='en-US',
+            language_code=language_code,
         )
 
         response = await speech_client.recognize(config=config, audio=audio)
@@ -49,43 +48,20 @@ async def transcribe_audio(file_path):
         print(f"Error transcribing audio: {e}")
         return None
 
-async def translate_file(file_path, target_language='ja'):
-    _, file_extension = os.path.splitext(file_path)
-    
-    if file_extension.lower() == '.txt':
-        with open(file_path, 'r', encoding='utf-8') as file:
-            content = file.read()
-        text_to_translate = content
-    else:
-        text_to_translate = await transcribe_audio(file_path)
-
-    if not text_to_translate:
-        return None
-
-    source_language = detect_language(text_to_translate)
-    if source_language == target_language:
-        print("Input text is already in the target language.")
-        return None
-
-    return translate_text(text_to_translate, target_language)
-
-def save_translation(translated_content, output_file_path):
+def save_transcription(transcribed_content, output_file_path):
     with open(output_file_path, 'w', encoding='utf-8') as file:
-        file.write(translated_content)
-    print(f"Translated content saved to {output_file_path}")
+        file.write(transcribed_content)
+    print(f"Transcribed content saved to {output_file_path}")
 
-async def batch_translate(file_paths, output_dir, progress_callback, target_language='ja'):
-    translations = await asyncio.gather(
-        *[translate_file(file_path, target_language) for file_path in file_paths]
+async def batch_transcribe(file_paths, output_dir, progress_callback, language_code='ja-JP'):
+    transcriptions = await asyncio.gather(
+        *[transcribe_audio(file_path, language_code) for file_path in file_paths]
     )
-    for i, (file_path, translation) in enumerate(zip(file_paths, translations)):
-        if translation:
-            output_file_path = os.path.join(output_dir, f"translated_{os.path.basename(file_path)}")
-            save_translation(translation, output_file_path)
+    for i, (file_path, transcription) in enumerate(zip(file_paths, transcriptions)):
+        if transcription:
+            output_file_path = os.path.join(output_dir, f"transcribed_{os.path.basename(file_path)}.txt")
+            save_transcription(transcription, output_file_path)
         progress_callback(i + 1, len(file_paths))
-
-def translate_text(text, target_language='ja'):
-    return translate_client.translate(text, target_language=target_language)['translatedText']
 
 def get_daily_challenge():
     challenges = [
@@ -120,6 +96,9 @@ class TranslatorApp(tk.Tk):
         self.file_translate_frame = tk.Frame(self)
         self.file_translate_frame.pack(pady=5)
         tk.Button(self.file_translate_frame, text="Translate Files", command=self.translate_files).pack(side=tk.LEFT, padx=5)
+        
+        # Button for uploading and transcribing podcasts
+        tk.Button(self.file_translate_frame, text="Transcribe Podcast", command=self.transcribe_podcast).pack(side=tk.LEFT, padx=5)
 
         tk.Button(self, text="Translate Conversation", command=self.translate_conversation).pack(pady=5)
         tk.Button(self, text="Translate Forum Post", command=self.translate_forum_post).pack(pady=5)
@@ -138,6 +117,35 @@ class TranslatorApp(tk.Tk):
     def set_status(self, message):
         self.status_bar.config(text=message)
         self.status_bar.update_idletasks()
+
+    def transcribe_podcast(self):
+        file_paths = filedialog.askopenfilenames(
+            title="Select Podcast(s) to Transcribe", 
+            filetypes=[("Audio files", "*.mp3 *.wav")]
+        )
+        if not file_paths:
+            return
+
+        output_dir = filedialog.askdirectory(
+            title="Select output directory", 
+            initialdir=self.default_output_dir
+        )
+        if not output_dir:
+            return
+
+        self.progress.set(0)
+        self.output_text.delete(1.0, tk.END)
+
+        def progress_callback(current, total):
+            self.progress.set((current / total) * 100)
+            self.set_status(f"Transcribing podcast {current} of {total}")
+
+        def run_transcription():
+            asyncio.run(batch_transcribe(file_paths, output_dir, progress_callback, 'ja-JP'))
+            self.set_status("Transcription complete")
+            messagebox.showinfo("Info", "Podcast transcription complete")
+
+        threading.Thread(target=run_transcription).start()
 
     def translate_files(self):
         file_paths = filedialog.askopenfilenames(
@@ -184,7 +192,6 @@ class TranslatorApp(tk.Tk):
             if translated_content:
                 self.output_text.delete(1.0, tk.END)
                 self.output_text.insert(tk.END, translated_content)
-                messagebox.showinfo("Translated Text", translated_content)
 
     def open_settings(self):
         settings_window = tk.Toplevel(self)
@@ -216,8 +223,11 @@ class TranslatorApp(tk.Tk):
     def save_settings(self):
         self.default_output_dir = self.output_dir_entry.get()
         self.default_target_language = self.language_entry.get()
-        messagebox.showinfo("Settings", "Settings saved successfully")
+        messagebox.showinfo("Settings", "Settings saved successfully.")
 
+# Start the application
 if __name__ == "__main__":
     app = TranslatorApp()
     app.mainloop()
+
+
